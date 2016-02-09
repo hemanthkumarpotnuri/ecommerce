@@ -6,34 +6,9 @@ var bodyParser = require('body-parser');
 var ejs = require('ejs');
 var engine = require('ejs-mate');
 var app = express();
-
-//MIDDLEWARE
-app.use(morgan('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended : true}));
-app.engine('ejs',engine);
-app.set('view engine','ejs');
-
-
-app.post('/createUser',function(req, res, next)
-{
-    var user = new User();
-    user.profile.name = req.body.name;
-    user.password = req.body.password;
-    user.email = req.body.email;
-
-    user.save(function(err){
-         if (err){
-           return next(err);
-         }
-         res.json('Sucessfully created a new user');
-    });
-});
-
-app.get('/', function(req, res)
-{
-  res.render('home');
-});
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
+var flash = require('express-flash');
 
 
 mongoose.connect('mongodb://root:hemanth@ds059145.mongolab.com:59145/ecommerce457',function(err){
@@ -45,6 +20,33 @@ mongoose.connect('mongodb://root:hemanth@ds059145.mongolab.com:59145/ecommerce45
   }
 
 });
+
+
+
+//MIDDLEWARE
+
+app.use(express.static(__dirname + '/public'));
+app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended : true}));
+app.engine('ejs',engine);
+app.set('view engine','ejs');
+app.use(cookieParser());
+app.use(session({
+  resave : true,
+  saveUninitialized: true,
+  secret : 'H34FSD$W$#@@#'
+}));
+
+app.use(flash());
+
+
+var mainRoutes  = require('./routes/main');
+app.use(mainRoutes);
+var userRoutes = require('./routes/user');
+app.use(userRoutes);
+
+
 
 
 app.listen(3000, function(err)
